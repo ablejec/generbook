@@ -1,0 +1,1183 @@
+% -*- TeX:Rnw:UTF-8 -*-
+% ----------------------------------------------------------------
+% .R knitr file  ************************************************
+% ----------------------------------------------------------------
+%%
+% \VignetteIndexEntry{}
+% \VignetteDepends{}
+% \VignettePackage{}
+\documentclass[a4paper,12pt]{article}
+%\usepackage[slovene]{babel}
+\usepackage[utf8]{inputenc} %% must be here for Sweave encoding check
+%\input{abpkg}
+%\input{abcmd}
+%\input{abpage}
+\usepackage{pgf,pgfarrows,pgfnodes,pgfautomata,pgfheaps,pgfshade}
+\usepackage{amsmath,amssymb}
+\usepackage{colortbl}
+%\input{mysweave}
+
+<<include=FALSE>>=
+#outputFile <- "report-copy.pdf"
+render_sweave()
+opts_chunk$set(fig.path='./figs/',tidy=TRUE)
+opts_knit$set(concordance=TRUE)
+@
+\setkeys{Gin}{width=0.8\textwidth}  % set graphicx parameter
+\usepackage{lmodern}
+%\input{abfont}
+
+% ----------------------------------------------------------------
+\begin{document}
+%% Sweave settings for includegraphics default plot size (Sweave default is 0.8)
+%% notice this must be after begin{document}
+%%% \setkeys{Gin}{width=0.9\textwidth}
+% ----------------------------------------------------------------
+\title{Preparation of AS2017 Abstract book}
+\author{A. Blejec}
+%\address{}%
+%\email{}%
+%
+%\thanks{}%
+%\subjclass{}%
+%\keywords{}%
+
+%\date{}%
+%\dedicatory{}%
+%\commby{}%
+\maketitle
+% ----------------------------------------------------------------
+%\begin{abstract}
+%
+%\end{abstract}
+% ----------------------------------------------------------------
+\tableofcontents
+<<Author:,echo=FALSE>>=
+###############################################
+##                                           ##
+## (c) Andrej Blejec (andrej.blejec@nib.si)  ##
+##                                           ##
+###############################################
+@
+<<initialize,echo=FALSE,results='hide',message=FALSE>>=
+options(width=70)
+#library(Hmisc)
+#library(xlsReadWrite)
+@
+
+<<>>=
+library(generbook)
+library(tools)
+@
+
+\section{Parameters}
+
+<<>>=
+my.root <- "D:/Dropbox/AS17/Blejec"
+my.program.file=file.path(my.root,"programTry_11.txt") # program file
+my.program.file
+submissions.file  <- file.path( my.root,
+"2017 Satellite_submissions-170628.txt")
+submissions.file
+my.filename=file.path(my.root,"/data/my.submissions.txt"    # submissions file
+dirAbstracts="../out"                    # output directory
+
+@
+
+<<>>=
+my.root <- "D:/Dropbox/AS17/Blejec"
+dirAbstracts=my.dir.abstracts="../out"
+my.dir.data=file.path(my.root,"data")
+my.filename=file.path("../data/Abstracts for Applied Statistics 2017.txt")
+dirAbstracts="../out"                    # output directory
+submissions.file <- my.filename
+my.program.file<-file.path("D:/Dropbox/AS17/data/ProgramTry.txt")
+@
+
+\section{Web to LaTeX conversion}
+
+<<>>=
+     my.data <- read.delim(submissions.file, sep = "\t",stringsAsFactors=FALSE,
+     na.strings=c("NA","m"),allowEscapes=TRUE)
+     #
+     my.data[35:45,8]
+     if(FALSE){
+     rpl <- function(f="",r="",x=D) {
+     D <- apply(x,2,function(x) gsub(f,r,x))
+     invisible(D)
+     }
+     D <- my.data
+     D <- rpl("\n","")
+     D <- rpl("^","\\")
+     D[35:45,1:15]
+
+     new.data <- my.data
+     new.data <- apply(new.data,2,function(x) gsub("\n","",x))
+     new.data <- apply(new.data,2,function(x) gsub("&","\\\\&",x))
+     new.data <- apply(new.data,2,function(x) gsub("•","*",x))
+     new.data <- apply(new.data,2,function(x) gsub("«","'",x))
+     new.data <- apply(new.data,2,function(x) gsub("»","'",x))
+     new.data <- apply(new.data,2,function(x) gsub("%","\\\\%",x))
+    # new.data <- apply(new.data,2,function(x) gsub("_","\\\\_",x))
+     #«»
+     new.data[35:45,]
+
+     new.data[,8] <- gsub("^","\\",new.data[,8],fixed=TRUE)
+     my.data <-new.data
+     my.data[35:45,8]
+     my.data[35:45,]
+     my.data <- data.frame(my.data,blank='',accept="yes")
+###write.table(my.data,file=my.filename,sep="\t",row.names=FALSE,na="",qmethod="d")
+# check
+    my.data2 <- read.delim(my.filename, sep = "\t",colClasses="character", na.strings=c("NA","m"))
+    my.data2$blank=""
+    my.data2$blank==""
+    }
+    my.data2 <- my.data
+@
+
+<<wordcloud>>=
+require(wordcloud)
+require(tm)
+require(tau)
+x <- my.data2[,8]
+x <- paste(x,collapse=" ")
+x <- removePunctuation(x)
+x <- removeWords(x,stopwords("en"))
+str(x)
+x <- strsplit(x,split=" ")[[1]]
+str(x)
+strsplit,split=c(" ",",",".",")","(","\\"),fixed=TRUE))
+str(x)
+x <- removeWords(x,stopwords("en"))
+x <- tolower(x)
+x <- removePunctuation(x)
+x <- removeWords(x,stopwords("en"))
+table(x)
+pdf("../out/figureCover1.pdf",width=5,height=5)
+set.seed(1234)
+wordcloud(x,min.freq=15,rot.per=0.4)
+dev.off()
+@
+
+
+\section{Generate abstract files}
+
+This will generate separate abstract files for each submission.
+
+<<my.generate.abstracts>>=
+.fun.get.index.slo <-
+function (my.lastname, my.initials, my.char = c("Ĺˇ", "Ĺľ", "ÄŤ",
+    "Ä‡", "Ĺ ", "Ĺ˝", "ÄŚ", "Ä†"), my.new.char = c("szz", "zzz",
+    "czz", "czzz", "SZZ", "ZZZ", "CZZ", "CZZZ"))
+{
+    my.splitted <- unlist(strsplit(as.character(my.lastname),
+        split = NULL))
+    my.char.present <- my.char %in% my.splitted
+    if (any(my.char.present)) {
+        for (ii in which(my.char.present)) {
+            my.splitted[which(my.splitted %in% my.char[ii])] <- my.new.char[ii]
+        }
+        my.splitted <- sapply(list(my.splitted), paste, collapse = "")
+        my.index <- paste("\\index{", my.splitted, "@", my.lastname,
+            ", ", my.initials, "}", sep = "")
+    }
+    else my.index <- paste("\\index{", my.lastname, ", ", my.initials,
+        "}", sep = "")
+    my.index
+}
+my.generate.abstracts <-
+function (my.filename, dirAbstracts, author.lastname = seq(23,
+    by = 6, length.out = 7), author.firstname = seq(24, by = 6,
+    length.out = 7), author.institution = seq(26, by = 6, length.out = 7),
+    author.city = seq(27, by = 6, length.out = 7), author.country = seq(3,
+        by = 1, length.out = 7) + 1, author.email = seq(25, by = 6,
+        length.out = 7), author.presenting = seq(22, by = 6,
+        length.out = 7), pres.title = 18, pres.abstract = 21,
+    accept = 17, topic1 = 19, topic2 = 3, id = 2, notes = 73,
+    ref2 = 77, ref3 = 78, ref4 = 79, duplicated = NULL, accept.all = F,
+    noNotes = F, style = "AS2012", notesDay = 81, notesPayment = 82,
+    verbose = FALSE,after="\\clearpage")
+{
+    initial.wd = getwd()
+    my.data <- read.delim(my.filename, sep = "\t",colClasses ="character")
+    setwd(dirAbstracts)
+    num.authors <- apply(my.data[, author.lastname], 1, function(x) sum(!is.na(x) &
+        x != ""))
+    my.data <- my.data[num.authors != 0, ]
+    my.data[, author.email] = apply(my.data[, author.email],
+        2, function(x) as.character(x))
+    for (i in 1:nrow(my.data)) for (j in 1:length(author.email)) my.data[i,
+        author.email[j]] = sub(pattern = "_", replacement = "\\\\_",
+        my.data[i, author.email[j]])
+    if (accept.all != T)
+        my.data <- my.data[my.data[, accept] == "Yes", ]
+    num.authors <- apply(my.data[, author.lastname], 1, function(x) sum(!is.na(x) &
+        x != ""))
+    presenting.author <- as.numeric(unlist(apply(my.data[, author.presenting],
+        1, function(x) which(tolower(x) %in% c( "yes","presenter"))[1])))
+    presenting.author[is.na(presenting.author)] <- 1
+    titolo = autori = affiliazioni = abstract = rep("", dim(my.data)[1])
+    if (style == "AS2012") {
+        for (i in 1:dim(my.data)[1]) {
+            if (verbose == TRUE)
+                cat("ID=", i)
+            titolo[i] <- paste("{", my.data[i, pres.title], "}",
+                sep = "")
+            TMP <- strsplit(as.character(my.data[, author.firstname[1]]),
+                c(" "))
+            number.of.names <- unlist(lapply(TMP, length))
+            authors.initials <- toupper(strsplit(TMP[[i]][1],
+                "")[[1]][1])
+            if (number.of.names[i] > 1)
+                for (j in 2:number.of.names[i]) authors.initials <- paste(authors.initials,
+                  toupper(strsplit(TMP[[i]][j], "")[[1]][1]),
+                  sep = "")
+            inst.city = paste(unlist((my.data[i, author.institution[1:num.authors[i]]])),
+                unlist((my.data[i, author.city[1:num.authors[i]]])))
+            how.many.inst = length(unique(inst.city))
+            one.inst.true = how.many.inst == 1
+            if (one.inst.true)
+                index.inst = rep(1, num.authors[i])
+            else {
+                index.inst = as.numeric(factor(inst.city, levels = unique(inst.city)))
+            }
+            if (num.authors[i] == 1) {
+                tmp <- paste(my.data[i, author.firstname[1]],
+                  " ", my.data[i, author.lastname[1]], .fun.get.index.slo(my.data[i,
+                    author.lastname[1]], authors.initials), sep = "")
+                tmp.mails = paste("\\Email{", ifelse(!is.na(my.data[i,
+                  author.email[1]]), paste(my.data[i, author.email[1]]),
+                  ""), "}\n", sep = "")
+            }
+            else {
+                if (presenting.author[i] == 1) {
+                  if (one.inst.true) {
+                    tmp <- paste("\\Presenting{", my.data[i,
+                      author.firstname[1]], " ", my.data[i, author.lastname[1]],
+                      "}", .fun.get.index.slo(my.data[i, author.lastname[1]],
+                        authors.initials), sep = "")
+                  }
+                  else tmp <- paste("\\Presenting{", my.data[i,
+                    author.firstname[1]], " ", my.data[i, author.lastname[1]],
+                    "}", "$^1$", .fun.get.index.slo(my.data[i,
+                      author.lastname[1]], authors.initials),
+                    sep = "")
+                }
+                else {
+                  if (one.inst.true) {
+                    tmp <- paste(my.data[i, author.firstname[1]],
+                      " ", my.data[i, author.lastname[1]], .fun.get.index.slo(my.data[i,
+                        author.lastname[1]], authors.initials),
+                      sep = "")
+                  }
+                  else {
+                    tmp <- paste(my.data[i, author.firstname[1]],
+                      " ", my.data[i, author.lastname[1]], "$^1$",
+                      .fun.get.index.slo(my.data[i, author.lastname[1]],
+                        authors.initials), sep = "")
+                  }
+                }
+            }
+            if (num.authors[i] > 1)
+                for (j in 2:num.authors[i]) {
+                  TMP <- strsplit(as.character(my.data[, author.firstname[j]]),
+                    c(" "))
+                  number.of.names <- unlist(lapply(TMP, length))
+                  authors.initials <- toupper(strsplit(TMP[[i]][1],
+                    "")[[1]][1])
+                  if (number.of.names[i] > 1)
+                    for (jj in 2:number.of.names[i]) authors.initials <- paste(authors.initials,
+                      toupper(strsplit(TMP[[i]][jj], "")[[1]][1]),
+                      sep = "")
+                  if (j < num.authors[i]) {
+                    if (one.inst.true) {
+                      if (presenting.author[i] == j)
+                        tmp <- paste(tmp, ", \\Presenting{",
+                          paste(my.data[i, author.firstname[j]],
+                            " ", my.data[i, author.lastname[j]],
+                            "}", .fun.get.index.slo(my.data[i,
+                              author.lastname[j]], authors.initials),
+                            sep = ""))
+                      else tmp <- paste(tmp, paste(my.data[i,
+                        author.firstname[j]], " ", my.data[i,
+                        author.lastname[j]], .fun.get.index.slo(my.data[i,
+                        author.lastname[j]], authors.initials),
+                        sep = ""), sep = ", ")
+                    }
+                    else {
+                      if (presenting.author[i] == j)
+                        tmp <- paste(tmp, ", \\Presenting{",
+                          paste(my.data[i, author.firstname[j]],
+                            " ", my.data[i, author.lastname[j]],
+                            "}$^", index.inst[j], "$", .fun.get.index.slo(my.data[i,
+                              author.lastname[j]], authors.initials),
+                            sep = ""), sep = "")
+                      else tmp <- paste(tmp, paste(my.data[i,
+                        author.firstname[j]], " ", my.data[i,
+                        author.lastname[j]], "$^", index.inst[j],
+                        "$", .fun.get.index.slo(my.data[i, author.lastname[j]],
+                          authors.initials), sep = ""), sep = ", ")
+                    }
+                  }
+                  else {
+                    if (one.inst.true) {
+                      if (presenting.author[i] == j)
+                        tmp <- paste(tmp, " and \\Presenting{",
+                          paste(my.data[i, author.firstname[j]],
+                            " ", my.data[i, author.lastname[j]],
+                            "}", .fun.get.index.slo(my.data[i,
+                              author.lastname[j]], authors.initials),
+                            sep = ""), sep = "")
+                      else tmp <- paste(tmp, paste(my.data[i,
+                        author.firstname[j]], " ", my.data[i,
+                        author.lastname[j]], .fun.get.index.slo(my.data[i,
+                        author.lastname[j]], authors.initials),
+                        sep = ""), sep = " and ")
+                    }
+                    else {
+                      if (presenting.author[i] == j)
+                        tmp <- paste(tmp, "and \\Presenting{",
+                          paste(my.data[i, author.firstname[j]],
+                            " ", my.data[i, author.lastname[j]],
+                            "}$^", index.inst[j], "$", .fun.get.index.slo(my.data[i,
+                              author.lastname[j]], authors.initials),
+                            sep = ""), sep = "")
+                      else tmp <- paste(tmp, paste(my.data[i,
+                        author.firstname[j]], " ", my.data[i,
+                        author.lastname[j]], "$^", index.inst[j],
+                        "$", .fun.get.index.slo(my.data[i, author.lastname[j]],
+                          authors.initials), sep = ""), sep = " and ")
+                    }
+                  }
+                }
+            autori[i] <- paste("{", tmp, "}", sep = "")
+            if (num.authors[i] == 1) {
+                tmp <- paste("\\Afilliation{", ifelse(my.data[i,
+                  author.institution[1]] != "", paste(my.data[i,
+                  author.institution[1]], ", ", sep = ""), ""),
+                  ifelse(my.data[i, author.city[1]] != "", paste(my.data[i,
+                    author.city[1]], ", ", sep = ""), ""), ifelse(my.data[i,
+                    author.country[1]] != "", paste(my.data[i,
+                    author.country[1]]), ""), "}\n", sep = "")
+            }
+            else {
+                if (one.inst.true) {
+                  tmp <- paste("\\Afilliation{", ifelse(my.data[i,
+                    author.institution[1]] != "", paste(my.data[i,
+                    author.institution[1]], ", ", sep = ""),
+                    ""), ifelse(my.data[i, author.city[1]] !=
+                    "", paste(my.data[i, author.city[1]], ", ",
+                    sep = ""), ""), ifelse(my.data[i, author.country[1]] !=
+                    "", paste(my.data[i, author.country[1]]),
+                    ""), "}\n", sep = "")
+                  tmp.mails = paste("\\Email{", ifelse(!is.na(my.data[i,
+                    author.email[1]]), paste(my.data[i, author.email[1]]),
+                    ""), "}\n", sep = "")
+                  for (j in 2:num.authors[i]) {
+                    tmp.mails <- paste(tmp.mails, "$\\Email{",
+                      ifelse(!is.na(my.data[i, author.email[j]]),
+                        paste(my.data[i, author.email[j]]), ""),
+                      "}\n", sep = "")
+                  }
+                }
+                else {
+                  tmp <- paste("\\Afilliation{$^", 1, "$", ifelse(my.data[i,
+                    author.institution[1]] != "", paste(my.data[i,
+                    author.institution[1]], ", ", sep = ""),
+                    ""), ifelse(my.data[i, author.city[1]] !=
+                    "", paste(my.data[i, author.city[1]], ", ",
+                    sep = ""), ""), ifelse(my.data[i, author.country[1]] !=
+                    "", paste(my.data[i, author.country[1]]),
+                    ""), "}\n ", sep = "")
+                  if (num.authors[i] > 1) {
+                    for (j in unique(index.inst)[-1]) {
+                      which.author.use = which(j == index.inst)[1]
+                      tmp <- paste(tmp, "\\Afilliation{$^", j,
+                        "$", ifelse(my.data[i, author.institution[which.author.use]] !=
+                          "", paste(my.data[i, author.institution[which.author.use]],
+                          ", ", sep = ""), ""), ifelse(my.data[i,
+                          author.city[which.author.use]] != "",
+                          paste(my.data[i, author.city[which.author.use]],
+                            ", ", sep = ""), ""), ifelse(my.data[i,
+                          author.country[which.author.use]] !=
+                          "", paste(my.data[i, author.country[which.author.use]]),
+                          ""), "}\n", sep = "")
+                    }
+                  }
+                }
+                tmp.mails = paste("\\Email{", ifelse(!is.na(my.data[i,
+                  author.email[1]]), paste(my.data[i, author.email[1]]),
+                  ""), "}", sep = "")
+                for (j in 2:num.authors[i]) tmp.mails = paste(tmp.mails,
+                  paste("\\Email{", ifelse(!is.na(my.data[i,
+                    author.email[j]]), paste(my.data[i, author.email[j]]),
+                    ""), "}", sep = ""), sep = ", ")
+            }
+            tmp = paste(tmp, tmp.mails, sep = "\n")
+            affiliazioni[i] <- paste("{", tmp, "}", sep = "")
+            abstract[i] <- paste("{", my.data[i, pres.abstract],
+                "}", sep = "")
+            if (noNotes == F)
+                temp <- paste("{Topic1: ", my.data[i, topic1],
+                  ", Topic2: ", my.data[i, topic2], ". Abstract ID: ",
+                  my.data[i, id], ". Accepted: ", my.data[i,
+                    accept], ". Notes: ", my.data[i, notes],
+                  ". Ref1: ", my.data[i, ref2], ". Ref2: ", my.data[i,
+                    ref3], ". Ref3: ", my.data[i, ref4], "}",
+                  sep = "")
+            else temp <- paste("{Abstract ID: ", my.data[i, id],
+                ". Topic1: ", my.data[i, topic1], ", Topic2: ",
+                my.data[i, topic2], ".}", sep = "")
+            zz <- file(paste(my.data[i, id], ".tex", sep = ""),
+                "w")
+            cat("\\A", titolo[i], autori[i], affiliazioni[i],
+                temp, abstract[i], after, sep = "\n", file = zz)
+            close(zz)
+        }
+    }
+    else {
+        for (i in 1:dim(my.data)[1]) {
+            if (verbose == TRUE)
+                cat("ID=", i)
+            titolo[i] <- paste("{", my.data[i, pres.title], "}",
+                sep = "")
+            TMP <- strsplit(as.character(my.data[, author.firstname[1]]),
+                c(" "))
+            number.of.names <- unlist(lapply(TMP, length))
+            authors.initials <- toupper(strsplit(TMP[[i]][1],
+                "")[[1]][1])
+            if (number.of.names[i] > 1)
+                for (j in 2:number.of.names[i]) authors.initials <- paste(authors.initials,
+                  toupper(strsplit(TMP[[i]][j], "")[[1]][1]),
+                  sep = "")
+            one.inst.true <- length(unique(unlist((my.data[i,
+                author.institution[1:num.authors[i]]])))) ==
+                1 & length(unique(unlist((my.data[i, author.city[1:num.authors[i]]])))) ==
+                1
+            if (num.authors[i] == 1) {
+                tmp <- paste(my.data[i, author.firstname[1]],
+                  " ", my.data[i, author.lastname[1]], .fun.get.index.slo(my.data[i,
+                    author.lastname[1]], authors.initials), sep = "")
+            }
+            else {
+                if (presenting.author[i] == 1)
+                  tmp <- paste("\\Presenting{", my.data[i, author.firstname[1]],
+                    " ", my.data[i, author.lastname[1]], "}",
+                    "$^1$", .fun.get.index.slo(my.data[i, author.lastname[1]],
+                      authors.initials), sep = "")
+                else tmp <- paste(my.data[i, author.firstname[1]],
+                  " ", my.data[i, author.lastname[1]], "$^1$",
+                  .fun.get.index.slo(my.data[i, author.lastname[1]],
+                    authors.initials), sep = "")
+                if (num.authors[i] > 1)
+                  for (j in 2:num.authors[i]) {
+                    TMP <- strsplit(as.character(my.data[, author.firstname[j]]),
+                      c(" "))
+                    number.of.names <- unlist(lapply(TMP, length))
+                    authors.initials <- toupper(strsplit(TMP[[i]][1],
+                      "")[[1]][1])
+                    if (number.of.names[i] > 1)
+                      for (jj in 2:number.of.names[i]) authors.initials <- paste(authors.initials,
+                        toupper(strsplit(TMP[[i]][jj], "")[[1]][1]),
+                        sep = "")
+                    if (j < num.authors[i]) {
+                      if (presenting.author[i] == j)
+                        tmp <- paste(tmp, ", \\Presenting{",
+                          paste(my.data[i, author.firstname[j]],
+                            " ", my.data[i, author.lastname[j]],
+                            "}$^", j, "$", .fun.get.index.slo(my.data[i,
+                              author.lastname[j]], authors.initials),
+                            sep = ""))
+                      else tmp <- paste(tmp, paste(my.data[i,
+                        author.firstname[j]], " ", my.data[i,
+                        author.lastname[j]], "$^", j, "$", .fun.get.index.slo(my.data[i,
+                        author.lastname[j]], authors.initials),
+                        sep = ""), sep = ", ")
+                    }
+                    else {
+                      if (presenting.author[i] == j)
+                        tmp <- paste(tmp, "and \\Presenting{",
+                          paste(my.data[i, author.firstname[j]],
+                            " ", my.data[i, author.lastname[j]],
+                            "}$^", j, "$", .fun.get.index.slo(my.data[i,
+                              author.lastname[j]], authors.initials),
+                            sep = ""), sep = "")
+                      else tmp <- paste(tmp, paste(my.data[i,
+                        author.firstname[j]], " ", my.data[i,
+                        author.lastname[j]], "$^", j, "$", .fun.get.index.slo(my.data[i,
+                        author.lastname[j]], authors.initials),
+                        sep = ""), sep = " and ")
+                    }
+                  }
+            }
+            autori[i] <- paste("{", tmp, "}", sep = "")
+            if (num.authors[i] == 1) {
+                tmp <- paste("\\Afilliation{", ifelse(my.data[i,
+                  author.institution[1]] != "", paste(my.data[i,
+                  author.institution[1]], ", ", sep = ""), ""),
+                  ifelse(my.data[i, author.city[1]] != "", paste(my.data[i,
+                    author.city[1]], ", ", sep = ""), ""), ifelse(my.data[i,
+                    author.country[1]] != "", paste(my.data[i,
+                    author.country[1]]), ""), "}; \\Email{",
+                  ifelse(!is.na(my.data[i, author.email[1]]),
+                    paste(my.data[i, author.email[1]]), ""),
+                  "}\n", sep = "")
+            }
+            else {
+                if (one.inst.true) {
+                  tmp <- paste("\\Afilliation{", ifelse(my.data[i,
+                    author.institution[1]] != "", paste(my.data[i,
+                    author.institution[1]], ", ", sep = ""),
+                    ""), ifelse(my.data[i, author.city[1]] !=
+                    "", paste(my.data[i, author.city[1]], ", ",
+                    sep = ""), ""), ifelse(my.data[i, author.country[1]] !=
+                    "", paste(my.data[i, author.country[1]]),
+                    ""), "}\n\n\t\t\t\t\t$^1$\\Email{", ifelse(!is.na(my.data[i,
+                    author.email[1]]), paste(my.data[i, author.email[1]]),
+                    ""), "}\n", sep = "")
+                  for (j in 2:num.authors[i]) {
+                    tmp <- paste(tmp, "$^", j, "$\\Email{", ifelse(!is.na(my.data[i,
+                      author.email[j]]), paste(my.data[i, author.email[j]]),
+                      ""), "}\n", sep = "")
+                  }
+                }
+                else {
+                  tmp <- paste("\\Afilliation{$^", 1, "$", ifelse(my.data[i,
+                    author.institution[1]] != "", paste(my.data[i,
+                    author.institution[1]], ", ", sep = ""),
+                    ""), ifelse(my.data[i, author.city[1]] !=
+                    "", paste(my.data[i, author.city[1]], ", ",
+                    sep = ""), ""), ifelse(my.data[i, author.country[1]] !=
+                    "", paste(my.data[i, author.country[1]]),
+                    ""), "}; \\Email{", ifelse(!is.na(my.data[i,
+                    author.email[1]]), paste(my.data[i, author.email[1]]),
+                    ""), "}\n", sep = "")
+                  for (j in 2:num.authors[i]) {
+                    tmp <- paste(tmp, "\\Afilliation{$^", j,
+                      "$", ifelse(my.data[i, author.institution[j]] !=
+                        "", paste(my.data[i, author.institution[j]],
+                        ", ", sep = ""), ""), ifelse(my.data[i,
+                        author.city[j]] != "", paste(my.data[i,
+                        author.city[j]], ", ", sep = ""), ""),
+                      ifelse(my.data[i, author.country[j]] !=
+                        "", paste(my.data[i, author.country[j]]),
+                        ""), "}; \\Email{", ifelse(!is.na(my.data[i,
+                        author.email[j]]), paste(my.data[i, author.email[j]]),
+                        ""), "}\n", sep = "")
+                  }
+                }
+            }
+            affiliazioni[i] <- paste("{", tmp, "}", sep = "")
+            abstract[i] <- paste("{", my.data[i, pres.abstract],
+                "}", sep = "")
+            if (noNotes == F)
+                temp <- paste("{Topic1: ", my.data[i, topic1],
+                  ", Topic2: ", my.data[i, topic2], ". Abstract ID: ",
+                  my.data[i, id], ". Accepted: ", my.data[i,
+                    accept], ". Notes: ", my.data[i, notes],
+                  ". Ref1: ", my.data[i, ref2], ". Ref2: ", my.data[i,
+                    ref3], ". Ref3: ", my.data[i, ref4], "}",
+                  sep = "")
+            else temp <- paste("{Abstract ID: ", my.data[i, id],
+                ". Topic1: ", my.data[i, topic1], ", Topic2: ",
+                my.data[i, topic2], ".}", sep = "")
+            zz <- file(paste(my.data[i, id], ".tex", sep = ""),
+                "w")
+            cat("\\A", titolo[i], autori[i], affiliazioni[i],
+                temp, abstract[i], sep = "\n", file = zz)
+            close(zz)
+        }
+    }
+    zz <- file(paste("abstractList.tex", sep = ""), "w")
+    for (i in my.data[, id]) cat("\\input{", i, ".tex}\n", sep = "",
+        file = zz)
+    close(zz)
+    zz <- file(paste("abstractListAccepted.tex", sep = ""), "w")
+    for (i in my.data[my.data[, accept] == "Yes", id]) cat("\\input{",
+        i, ".tex}\n", sep = "", file = zz)
+    close(zz)
+    all.topics <- sort(unique(levels(my.data[, topic1]), levels(my.data[,
+        topic2])))
+    all.topics <- all.topics[all.topics != "---" | all.topics ==
+        ""]
+    zz <- file("abstractListByTopic.tex", "w")
+    for (ii in 1:length(all.topics)) {
+        which.abstracts = unique(which(my.data[, topic1] == all.topics[ii] |
+            my.data[, topic1] == all.topics[ii]))
+        cat("{\\bf \\Large ", as.character(all.topics[ii]), "}\\\\\\\\",
+            sep = " ", file = zz)
+        for (i in which.abstracts) cat(titolo[i], "\\\\", autori[i],
+            "\\\\", affiliazioni[i], paste(" ID=", my.data[i,
+                id], "; Day=", my.data[i, notesDay], "Payment=",
+                my.data[i, notesPayment], "\\\\ Topics={\\small ",
+                as.character(my.data[i, topic1]), as.character(my.data[i,
+                  topic2]), "} \\\\\\\\", sep = " "), sep = " ",
+            file = zz)
+        cat("\\\\ \\clearpage", file = zz)
+    }
+    close(zz)
+    my.data.accepted = my.data[my.data[, accept] == "Yes", ]
+    all.topics = sort(unique(levels(my.data.accepted[, topic1]),
+        levels(my.data.accepted[, topic2])))
+    all.topics = all.topics[all.topics != "---" | all.topics ==
+        ""]
+    zz <- file("abstractListByTopicAccepted.tex", "w")
+    for (ii in 1:length(all.topics)) {
+        which.abstracts = unique(which(my.data.accepted[, topic1] ==
+            all.topics[ii] | my.data.accepted[, topic1] == all.topics[ii]))
+        cat("{\\bf \\Large ", as.character(all.topics[ii]), "}\\\\\\\\",
+            sep = " ", file = zz)
+        for (i in which.abstracts) cat(titolo[my.data[, accept] ==
+            "Yes"][i], "\\\\", autori[my.data[, accept] == "Yes"][i],
+            "\\\\", affiliazioni[my.data[, accept] == "Yes"][i],
+            paste(" ID=", my.data.accepted[i, id], "; Day=",
+                my.data.accepted[i, notesDay], "Payment=", my.data.accepted[i,
+                  notesPayment], "\\\\ Topics={\\small ", as.character(my.data.accepted[i,
+                  topic1]), as.character(my.data.accepted[i,
+                  topic2]), "} \\\\\\\\", sep = " "), sep = " ",
+            file = zz)
+        cat("\\\\ \\clearpage", file = zz)
+    }
+    close(zz)
+    setwd(initial.wd)
+    return(list(My.data = my.data, PA = presenting.author))
+}
+
+@
+
+<<generate.abstracts>>=
+# note that name field 5 had a swap in 2016, check order and correct if necessary
+author.lastname=seq(7, by=8, length.out=7)+5
+	author.firstname=seq(8, by=8, length.out=7)+5
+	author.institution=seq(10, by=8, length.out=7)+5
+	author.city=seq(11, by=8, length.out=7)+5
+	author.country=seq(12, by=8, length.out=7)+5
+	author.email=seq(9, by=8, length.out=7)+5
+	author.presenting=seq(6, by=8, length.out=7)+5
+	pres.title=2+5
+	pres.abstract=3+5
+	accept=3
+	topic1=4+5
+	topic2=5+5
+	id=2 #75-3
+	notes=5 #73-3
+	ref2=66
+	ref3=67
+	ref4=68
+	duplicated=4 #74-3
+	accept.all=T
+	style="AS2012"
+	notes1=notesDay=5#70
+	notes2=notesPayment=5#70
+#	ISBN = "978-961-93547-6-6"
+#	CIP = "311(082)(0.034.2)"
+    ISBN = "9978-961-93547-9-7"
+	CIP = "311(082)"
+
+
+#generates the i.tex files, each one containing an abstract
+out.generate.abstracts<-generate.abstracts(my.filename=my.filename,
+	dirAbstracts=my.dir.abstracts,
+	author.lastname=author.lastname, author.firstname=author.firstname,
+	author.institution=author.institution, author.city=author.city, author.country=author.country,
+	author.email=author.email, author.presenting=author.presenting,
+	pres.title=pres.title, pres.abstract=pres.abstract, accept=accept, topic1=topic1, topic2=topic2,
+	id=id, notes=notes, ref2=ref2, ref3=ref3, ref4=ref4, duplicated=duplicated,
+	accept.all=accept.all, style="AS2012",  notesDay=notesDay,
+	notesPayment=notesPayment)
+
+############### submitted and accepted without notes
+
+
+#generates the i.tex files, each one containing an abstract
+out.generate.abstracts<-generate.abstracts(my.filename=my.filename,
+	dirAbstracts=my.dir.abstracts,
+	author.lastname=author.lastname, author.firstname=author.firstname,
+	author.institution=author.institution, author.city=author.city, author.country=author.country,
+	author.email=author.email, author.presenting=author.presenting,
+	pres.title=pres.title, pres.abstract=pres.abstract, accept=accept, topic1=topic1, topic2=topic2,
+	id=id, notes=notes, ref2=ref2, ref3=ref3, ref4=ref4, duplicated=duplicated,
+	accept.all=F, style="AS2012",  notesDay=notesDay,
+	notesPayment=notesPayment, noNotes=T)
+
+
+@
+
+\section{Generate program}
+
+<<my.generate.program>>=
+
+my.generate.program <-
+function (my.program.file, my.filename, dirAbstracts, abstract.id = c(10:14),
+    author.lastname = seq(23, by = 6, length.out = 7), author.firstname = seq(24,by = 6, length.out = 7), accept = 17, pres.title = 18,
+    id = 75, outfile.name = "program.tex",author.city=rep(51,7))
+{
+    init.wd = getwd()
+     my.program <- read.delim(my.program.file, sep = "\t",stringsAsFactors=FALSE,na.strings=c("NA","m"))
+    my.program <- my.program[!is.na(my.program[, 1]) & my.program[,
+        1] != "", ]
+    num.rows <- dim(my.program)[1]
+    my.order <- order(my.program$Day * 100 + my.program$TimeBegin)
+    my.program <- my.program[my.order, ]
+    number.days <- unique(my.program$Day)
+    my.time <- my.program$Day * 100 + my.program$TimeBegin
+    num.rows <- dim(my.program)[1]
+    my.data <- read.delim(my.filename, sep = "\t",stringsAsFactors=FALSE, na.strings=c("NA","m"))
+    my.data[,unique(author.city)] <- ""
+    print(my.data[,author.lastname])
+    print(apply(my.data[,author.lastname],1,paste,sep="*",collapse="+"))
+    num.authors <- apply(my.data[, author.lastname], 1, function(x) sum(!is.na(x) &
+    !x %in% c( ""," ")))
+        print(num.authors)
+    my.data <- my.data[num.authors != 0, ]
+    my.data <- my.data[toupper(my.data[, accept]) == "YES", ]
+    num.authors <- apply(my.data[, author.lastname], 1, function(x) sum(!is.na(x) &
+        !x %in% c( ""," ")))
+    num.authors
+    number.abstracts <- as.numeric(apply(my.program[, abstract.id],
+        1, function(x) sum(!is.na(x)&x!="")))
+    print(number.abstracts)
+    setwd(dirAbstracts)
+    zz <- file(outfile.name, "w")
+    cat("\\newcommand{\\LocTime}{}\n", sep = "", file = zz)
+    cat("\\clearpage \n \\normalsize \n \\pagestyle{fancy}\n\t\t% ------------------------------------------------- Next day -----\n\t\t\\renewcommand{\\Date}{}\n\t\t\\addtocontents{toc}{\\hfill\\textbf{\\Date}\\\\}\n\n\t\t%% ------------------------------------------- Session start\n\t\t\\renewcommand{\\Session}{}\n\t\t\\SetHeader{\\textbf{",
+        as.character(my.program$DayLong[1]), "}}{}", "\n", file = zz,
+        sep = "")
+    for (i in 1:num.rows) {
+        cat(i, "\n")
+        print(my.program[i,])
+        if (my.program$TimeBegin[i] > 10)
+            time.begin <- strsplit(as.character(my.program$TimeBegin[i]),
+                "")[[1]][1:5]
+        else time.begin <- strsplit(as.character(my.program$TimeBegin[i]),
+            "")[[1]][1:4]
+        if (!is.na(my.program$TimeEnd[i])) {
+            if (my.program$TimeEnd[i] > 10)
+                time.end <- strsplit(as.character(my.program$TimeEnd[i]),
+                  "")[[1]][1:5]
+            else time.end <- strsplit(as.character(my.program$TimeEnd[i]),
+                "")[[1]][1:4]
+        }
+        else time.end <- NA
+        # PrSectionHeader
+        # do not include phantom sessions
+        #
+        if(length(grep("\\\\phantom",as.character(my.program$Name[i])))==0){
+        cat("\\PrSectionHeader{", time.begin, sep = "", file = zz)
+        if (!is.na(time.end[1]))
+            cat("--", time.end, "}", sep = "", file = zz)
+        else cat("}", file = zz, sep = "")
+        cat("{", as.character(my.program$Name[i]), "}", file = zz,
+            sep = "")
+        if (my.program$Room[i] != "")
+            cat("{", as.character(my.program$Room[i]), "}",
+                file = zz, sep = "")
+        else cat("{}", file = zz, sep = "")
+        cat("+",my.program$Chair[i],"+\n",sep="")
+        if ( my.program$Chair[i] != "")
+            cat("{Chair: ", as.character(my.program$Chair[i]),
+                "}", file = zz, sep = "")
+        else cat("{}", file = zz, sep = "")
+        cat("\n", file = zz)
+        }
+        # End PrSectionHeader
+        #
+        if (number.abstracts[i] > 0) {
+            cat("\\begin{enumerate}\n", file = zz)
+            for (ii in 1:number.abstracts[i]) {
+                cat(ii, " ")
+                my.index <- which(my.data[, id] == my.program[i,
+                  abstract.id[ii]])
+                  cat("my.index=",my.index,"=")
+                tmp <- paste(my.data[my.index, author.firstname[1]],
+                  " ", my.data[my.index, author.lastname[1]],
+                  sep = "")
+                  print(tmp)
+                if (num.authors[my.index] > 1)
+                  for (j in 2:num.authors[my.index]) {
+                    if (j < num.authors[my.index])
+                      tmp <- paste(tmp, paste(my.data[my.index,
+                        author.firstname[j]], " ", my.data[my.index,
+                        author.lastname[j]], sep = ""), sep = ", ")
+                    else tmp <- paste(tmp, paste(my.data[my.index,
+                      author.firstname[j]], " ", my.data[my.index,
+                      author.lastname[j]], sep = ""), sep = " and ")
+                  }
+                autori <- tmp
+                cat("\\PrTalk{", as.character(my.data[my.index,
+                  pres.title]), "} \\newline {", autori, "}\n",
+                  sep = "", file = zz)
+            }
+            cat("\\end{enumerate}\n", file = zz)
+        }
+        if (i != num.rows) {
+            if (my.program$Day[i + 1] != my.program$Day[i]) {
+                cat("\\clearpage \n \\pagestyle{fancy}\n\t\t% ------------------------------------------------- Next day -----\n\t\t\\renewcommand{\\Date}{}\n\t\t\\addtocontents{toc}{\\hfill\\textbf{\\Date}\\\\}\n\t\t%% ------------------------------------------- Session start\n\t\t\\renewcommand{\\Session}{}\n\t\t\\SetHeader{\\textbf{",
+                  as.character(my.program$DayLong[i + 1]), "}}{}",
+                  "\n", file = zz, sep = "")
+            }
+        }
+    }
+    close(zz)
+    ################
+    ## Blejec
+    X <- as.character(my.program$TimeBegin)
+    b.TimeBegin <- gsub("\\.",":",substring(X,1,nchar(X)-1) )
+    X <- as.character(my.program$TimeEnd)
+    b.TimeEnd <- gsub("\\.",":",substring(X,1,nchar(X)-1) )
+    ##
+    ################
+    session.id <- which(number.abstracts > 0)
+    zz <- file("abstracts.tex", "w")
+    cat("\\noindent\\\\\n\n\\thispagestyle{empty}\n \\begin{center}\n  \\Large\n   % \\textbf{Program} \\\\ [0.5cm]\n   \\begin{flushright}\n   \\vspace{17cm} {\\Huge \\em{ \\textbf{ABSTRACTS}}} \\\\ [0.5cm]\n   \\end{flushright}\n   \\normalsize\n \\end{center}\n%\\noindent  \\hrulefill \\\\[0.5cm]\n\\small\n\\clearpage\n\n\n\\pagestyle{fancy}\n\\renewcommand{\\Date}{}\n\\addtocontents{toc}{\\hfill\\textbf{\\Date}\\\\}\n\n%% ------------------------------------------- Session start\n\\renewcommand{\\Session}{}\n\\SetHeader{}{\\textbf{Program Overview}}\n%%--------------------------------------------\n\n\n\n\n\n\n\n\n\n %\\begin{center}\n %  \\Large\n %   \\textbf{Abstracts} \\\\ [0.5cm]\n %  \\normalsize\n%  \\begin{flushright}\n%   \\vspace{17cm} {\\Huge \\em{ \\textbf{ABSTRACTS}}} \\\\ [0.5cm]\n%   \\end{flushright}\n%   \\normalsize\n \n \n% \\end{center}\n%\\noindent\\  %\\hrulefill \\\\\n\\small\n\\clearpage \n\n\\pagestyle{fancy}\n\n\\renewcommand{\\Date}{",
+        as.character(my.program$DayShort[session.id[1]]), "}\n\\addtocontents{toc}{\\hfill\\textbf{\\Date}\\\\}\n\n\\renewcommand{\\Session}{",
+        as.character(my.program$Name[session.id[1]]), "}\n\\Section{\\Session}\n\\SetHeader{\\Date}{\\Session}\n",
+        file = zz, sep = "")
+    for (i in 1:length(session.id)) {
+        cat(i, "\n")
+        for (j in 1:number.abstracts[session.id[i]]) {
+            cat("\\input{", my.program[session.id[i], abstract.id[j]],
+                ".tex}\n", file = zz, sep = "")
+        }
+        cat("\\clearpage\n", file = zz)
+        if (i != length(session.id)) {
+            cat("\\renewcommand{\\Session}{",
+            as.character(gsub("Session ","S", my.program$Name[session.id[i+1]])), "}\n",
+                "\\renewcommand{\\LocTime}{[", gsub("all ","",my.program$Room[session.id[i+1]])," ", b.TimeBegin[session.id[i+1]],"-", b.TimeEnd[session.id[i+1]],"]}\n",
+                "\\Section{\\Session}\n\\SetHeader{\\Date, \\LocTime}{\\Session}\n",
+                file = zz, sep = "")
+            if (my.program$Day[session.id[i]] != my.program$Day[session.id[i +
+                1]])
+                cat("\\renewcommand{\\Date}{", as.character(my.program$DayShort[session.id[i +
+                  1]]), "}\n\\addtocontents{toc}{\\hfill\\textbf{\\Date}\\\\}",
+                  file = zz, sep = "")
+        }
+    }
+    close(zz)
+    setwd(init.wd)
+}
+
+@
+
+
+<<generateProgram>>=
+
+  abstract.id<-10:14
+##  author.lastname = seq(10, by =   6, length.out = 7)
+##  author.firstname = seq(9, by = 6, length.out = 7)
+##  accept = 52
+##  pres.title = 7
+##  id = 1
+  outfile.name = "program.tex"
+
+my.generate.program(
+my.program.file=my.program.file,
+my.filename=my.filename,
+dirAbstracts=dirAbstracts,
+  abstract.id = abstract.id,
+  author.lastname = author.lastname,
+  author.firstname = author.firstname,
+  accept = accept,
+  pres.title = pres.title,
+  id = id,
+  outfile.name = outfile.name)
+@
+
+\section{Program Overview}
+
+<<my.generate.programOverview>>=
+my.generate.programOverview <-
+function (my.program.file, dirAbstracts, abstract.id = c(10:14))
+{
+    init.wd = getwd()
+    my.program <- read.delim(my.program.file, sep = "\t")
+    my.program <- my.program[!is.na(my.program[, 1]) & my.program[,
+        1] != "", ]
+    num.rows <- dim(my.program)[1]
+    setwd(dirAbstracts)
+    my.order <- order(my.program$Day * 100 + my.program$TimeBegin)
+    my.program <- my.program[my.order, ]
+    number.days <- unique(my.program$Day)
+    room.names <- unique(my.program$Room[my.program$Room != ""])
+    number.rooms <- length(room.names)
+    my.time <- my.program$Day * 100 + my.program$TimeBegin
+    number.abstracts <- as.numeric(apply(my.program[, abstract.id],
+        1, function(x) sum(!is.na(x))))
+    which.split <- ifelse(nchar(as.character(my.program$Name)) >=
+        25, 1, 0)
+    where.split <- rep(NA, num.rows + 1)
+    names.split <- vector("list", num.rows + 1)
+    names.split[[num.rows + 1]] <- ""
+    where.split[num.rows + 1] <- 2
+    my.program.name <- c(as.character(my.program$Name), "")
+    for (i in c(1:num.rows)[which.split == 1]) {
+        names.split[[i]] <- tmp <- strsplit(as.character(my.program$Name[i]),
+            split = " ")
+        where.split[i] <- which(cumsum(unlist(lapply(tmp, nchar))) >=
+            25)[1]
+        if (cumsum(unlist(lapply(tmp, nchar)))[length(tmp[[1]])] <=
+            25)
+            where.split[i] <- length(tmp[[1]])
+    }
+    for (i in c(1:num.rows)[which.split == 0]) {
+        names.split[[i]] <- tmp <- as.character(my.program$Name[i])
+    }
+    for (i in c(1:num.rows)[which.split == 0]) {
+        tmp <- strsplit(as.character(my.program$Name[i]), split = " ")
+        where.split[i] <- length(tmp)[[1]] + 1
+    }
+    which.split <- c(which.split, 0)
+    my.done <- rep(FALSE, num.rows)
+    zz <- file("programOverview.tex", "w")
+    cat("\\noindent\\\\\n\n\\thispagestyle{empty}\n \\begin{center}\n  \\Large\n   % \\textbf{Program} \\\\ [0.5cm]\n   \\begin{flushright}\n   \\vspace{17cm} {\\Huge \\em{ \\textbf{PROGRAM}}} \\\\ [0.5cm]\n   \\end{flushright}\n   \\normalsize\n \\end{center}\n%\\noindent  \\hrulefill \\\\[0.5cm]\n\\small\n\\clearpage\n\n\n\\pagestyle{fancy}\n\\renewcommand{\\Date}{}\n\\addtocontents{toc}{\\hfill\\textbf{\\Date}\\\\}\n\n%% ------------------------------------------- Session start\n\\renewcommand{\\Session}{}\n\\SetHeader{}{\\textbf{Program Overview}}\n%%--------------------------------------------\n\n\n\\vspace*{-1.0cm}\n\\begin{center} %end of the first cat, header of the file and beginning of the table\n\\begin{tabular}{|l|| l |",
+        file = zz)
+   ## cat(rep("c", number.rooms, sep = " "), "|}\\hline", file = zz)
+   ## for fixed columns if sessino names are short.
+    cat(rep("p{5cm}", number.rooms, sep = " "), "|}\\hline", file = zz)
+    cat("&&", paste(room.names, collapse = "&"), "\\\\\\hline\\hline\n",
+        file = zz)
+    day.within <- 0
+    day.changed <- FALSE
+    for (i in 1:num.rows) {
+        cat(i, "\n")
+        if (my.done[i] == FALSE) {
+            if (i > 1) {
+                if (my.program$DayTable[i] != my.program$DayTable[i -
+                  1])
+                  day.within <- 0
+                if (day.changed == T)
+                  my.line <- "\\\\\\hline\\hline"
+                else my.line <- paste("\\\\\\cline{2-", number.rooms +
+                  2, "}")
+                cat(my.line, "\n", file = zz)
+            }
+            if (my.program$TimeBegin[i] > 10)
+                time.begin <- strsplit(as.character(my.program$TimeBegin[i]),
+                  "")[[1]][1:5]
+            else time.begin <- strsplit(as.character(my.program$TimeBegin[i]),
+                "")[[1]][1:4]
+            if (!is.na(my.program$TimeEnd[i])) {
+                if (my.program$TimeEnd[i] > 10)
+                  time.end <- strsplit(as.character(my.program$TimeEnd[i]),
+                    "")[[1]][1:5]
+                else time.end <- strsplit(as.character(my.program$TimeEnd[i]),
+                  "")[[1]][1:4]
+            }
+            else time.end <- NA
+            if (day.within == 0)
+                tmp.day <- as.character(my.program$DayTable[i])
+            else tmp.day <- ""
+            day.within <- day.within + 1
+            which.same.time <- which(my.time[i] == my.time)
+            if (my.program$Room[i] == "") {
+                tmp.session <- paste("\\multicolumn{", number.rooms,
+                  "}{c|}{\\cellcolor[gray]{0.9}", my.program$Name[i],
+                  "}")
+                tmp.time <- paste(paste(time.begin, collapse = ""),
+                  ifelse(!is.na(time.end[1]), paste(" --", paste(time.end,
+                    collapse = "")), ""), sep = "")
+                cat(paste(tmp.day, tmp.time, tmp.session, sep = "&"),
+                  file = zz)
+                if (i < num.rows)
+                  day.changed <- ifelse(my.program$Day[i] !=
+                    my.program$Day[i + 1], TRUE, FALSE)
+            }
+            else {
+                which.room <- vector("list", number.rooms)
+                which.index <- numeric(number.rooms)
+                for (ii in 1:number.rooms) {
+                  tmp <- which(my.program$Room == room.names[ii])
+                  iii <- tmp[is.element(tmp, which.same.time)]
+                  my.done[iii] <- TRUE
+                  which.index[ii] <- ifelse(length(iii) == 1,
+                    iii, num.rows + 1)
+                  my.max <- max(which.index[!is.element(which.index,
+                    num.rows + 1)])
+                  if (i < num.rows)
+                    day.changed <- ifelse(my.program$Day[i] !=
+                      my.program$Day[my.max + 1], TRUE, FALSE)
+                }
+                if (any(which.split[which.index] == 1)) {
+                  tmp.session <- paste(paste(unlist(lapply(which.index,
+                    function(j) paste(unlist(names.split[[j]])[1:(where.split[j] -
+                      1)], collapse = " "))), collapse = "&"),
+                    "\\\\")
+                  tmp.session.2 <- paste(paste(unlist(lapply(which.index,
+                    function(j) paste(unlist(names.split[[j]])[-c(1:(where.split[j] -
+                      1))], collapse = " "))), collapse = "&"),
+                    sep = "")
+                  tmp.time <- paste("\\multirow{2}{*}{", paste(time.begin,
+                    collapse = ""), ifelse(!is.na(time.end[1]),
+                    paste(" --", paste(time.end, collapse = ""),
+                      "}"), "}"), sep = "")
+                  cat(paste(tmp.day, tmp.time, tmp.session, sep = "&"),
+                    file = zz)
+                  cat("\n", file = zz)
+                  cat(paste("", "", tmp.session.2, sep = "&"),
+                    file = zz)
+                  cat("\n", file = zz)
+                }
+                else {
+                  tmp.session <- paste(paste(my.program.name[which.index],
+                    collapse = "&"), sep = "")
+                  tmp.time <- paste(paste(time.begin, collapse = ""),
+                    ifelse(!is.na(time.end[1]), paste(" --",
+                      paste(time.end, collapse = "")), ""), sep = "")
+                  cat(paste(tmp.day, tmp.time, tmp.session, sep = "&"),
+                    file = zz)
+                  my.max <- max(which.index[!is.element(which.index,
+                    num.rows + 1)])
+                  if (i < num.rows)
+                    day.changed <- ifelse(my.program$Day[i] !=
+                      my.program$Day[my.max + 1], TRUE, FALSE)
+                }
+                cat("\n", file = zz)
+            }
+        }
+    }
+    cat("\\\\\\hline", "\n", "\\end{tabular} \\end{center}\n\\clearpage",
+        file = zz)
+    close(zz)
+    setwd(init.wd)
+}
+
+@
+
+<<>>=
+my.generate.programOverview(
+my.program.file=my.program.file,
+dirAbstracts=dirAbstracts,
+  abstract.id = abstract.id)
+@
+
+\section{Style}
+
+<<>>=
+# this function creates the styleAndData.tex file
+# to change that file, adapt parameters here
+write.styleAndData.tex(dirAbstracts=dirAbstracts, Style="AS2012",
+ DocYear="2017",
+ Date="September 24 - 27, 2017",
+ URL = "http://conferences.nib.si/AS2017",
+ Circulation = 120,
+ PublishedBy = "Statistical Society of Slovenia\\\\\n              \\>Litostrojska c. 54\\\\\n              \\> 1000 Ljubljana, Slovenia",
+ OrganizingComm = list("Andrej Blejec (Chair)", "Bogdan Grmek", "Lara Lusa", "Rianne van den Broeke", "Irena Vipavc Brvar", "Jerneja \\v{C}uk"),
+ ISBN = ISBN, CIP = CIP,
+ ScientificComm = list(
+  "Lara Lusa (Chair), Slovenia",
+  "Janez Stare (Scientific advisor), Slovenia",
+    "Vladimir Batagelj, Slovenia",
+    "Mihael Perman (Scientific advisor), Slovenia",
+  "Andrej Blejec, Slovenia",
+  "Matev\\v{z} Bren, Slovenia",
+  "Maurizio Brizzi, Italy",
+  "Anu\\v{s}ka Ferligoj, Slovenia",
+  "Herwig Friedl, Austria",
+  "Dario Gregori, Italy",
+  "Katarina Ko\\v{s}melj, Slovenia",
+  "Irena Kri\\v{z}man, Slovenia",
+  "Stanislaw Mejza, Poland",
+  "Jo\\v{z}e Rovan, Slovenia",
+  "Tamas Rudas, Hungary",
+  "Vasja Vehovar, Slovenia"),
+  Editors = "Lara Lusa, Rianne van den Broeke and Andrej Blejec",
+  Sponsors = list("D-net","IBMI","NIB","Statistical Office of the Republic of Slovenia","RESULT"),
+  CenterPage2 = "The word cloud on the cover was generated using WordArt.com. The source text included\nthe abstracts of the talks; the fifty most common words were displayed, and greater\nprominence was given to words that appeared more frequently.",
+  FigureFile = "Wordcloud_AS2017.pdf",
+  Footer="Applied Statistics 2017, 24 - 27 September 2017, Ribno, Slovenia"
+ )
+
+@
+
+
+\section{Create book}
+
+<<>>=
+texi2pdf(file.path(dirAbstracts, "AS-book.tex"))
+
+@
+
+%% knitr child handling
+%%
+%<<child='child_file.Rnw'>>=
+%@
+%<<result="hide">>=
+%out <- ""
+%for ( linija in levels(phenodata$Celicna.linija))
+%out <- paste(out,knit_child("child_file.rnw",quiet=TRUE))
+%@
+%\Sexpr{out}
+%%
+% ----------------------------------------------------------------
+%\bibliographystyle{chicago}
+%\addcontentsline{toc}{section}{\refname}
+%\bibliography{ab-general}
+%--------------------------------------------------------------
+
+%\clearpage
+%\appendix
+%\phantomsection\addcontentsline{toc}{section}{\appendixname}
+%\section{\R\ funkcije}
+%\input{}
+
+\clearpage
+\section*{SessionInfo}
+{\small
+<<sessionInfo,results='asis',echo=FALSE>>=
+cat(win.version(),"\n")
+toLatex(sessionInfo())
+cat("Project path:\\verb'",dirname(getwd()),"'\\\\\n")
+mainFile <- commandArgs(trailingOnly = TRUE)
+#
+mainFilePath <- file.path("../doc", mainFile[1])
+cat("Main file :\\verb'", mainFilePath, "'\n")
+#
+mainFile <- strsplit(mainFile,'.',fixed=TRUE)[[1]][1]
+projectName <- rev((strsplit(dirname(getwd()), "/"))[[1]])[1]
+#
+@
+
+\subsection*{View as vignette}
+Project files can be viewed by pasting this code to \R\ console:\\
+\begin{Schunk}
+\begin{Sinput}
+<<projectFiles,echo=FALSE,results='asis'>>=
+cat('> projectName <-"',projectName,'"; ',sep="")
+cat(' mainFile <-"',mainFile,'"',sep="")
+#
+@
+
+\end{Sinput}
+\end{Schunk}
+<<vignette,eval=FALSE>>=
+commandArgs()
+library(tkWidgets)
+openPDF(file.path(dirname(getwd()),"doc",
+paste(mainFile,"PDF",sep=".")))
+viewVignette("viewVignette", projectName, #
+file.path("../doc",paste(mainFile,"Rnw",sep=".")))
+#
+@
+
+\vfill \hrule \vspace{3pt} \footnotesize{
+%Revision \SVNId\hfill (c) A. Blejec%\input{../_COPYRIGHT.}
+%\SVNRevision ~/~ \SVNDate
+\noindent
+\texttt{Git Revision: \gitCommitterUnixDate \gitAbbrevHash{} (\gitCommitterDate)} \hfill \copyright A. Blejec\\
+\texttt{ \gitReferences} \hfill \verb'\Sexpr{mainFilePath}'\\
+
+}
+
+<<eval=FALSE,echo=FALSE>>=
+# getrootpath <- function() {
+# fp <- (strsplit(getwd(), "/"))[[1]]
+# file <- file.path(paste(fp[-length(fp)], collapse = "/"))
+# return(file)
+# }
+# fileName <- function(name="bla",ext="PDF") paste(name,ext,sep=".")
+@
+
+
+\end{document}
+% ----------------------------------------------------------------
