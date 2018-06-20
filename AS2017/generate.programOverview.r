@@ -5,7 +5,7 @@
 #' @export
 #' @examples
 #' set.seed(1)
-generate.programOverview <-
+my.generate.programOverview <-
 function (my.program.file, dirAbstracts, abstract.id = c(10:14))
 {
     init.wd = getwd()
@@ -50,7 +50,9 @@ function (my.program.file, dirAbstracts, abstract.id = c(10:14))
     zz <- file("programOverview.tex", "w")
     cat("\\noindent\\\\\n\n\\thispagestyle{empty}\n \\begin{center}\n  \\Large\n   % \\textbf{Program} \\\\ [0.5cm]\n   \\begin{flushright}\n   \\vspace{17cm} {\\Huge \\em{ \\textbf{PROGRAM}}} \\\\ [0.5cm]\n   \\end{flushright}\n   \\normalsize\n \\end{center}\n%\\noindent  \\hrulefill \\\\[0.5cm]\n\\small\n\\clearpage\n\n\n\\pagestyle{fancy}\n\\renewcommand{\\Date}{}\n\\addtocontents{toc}{\\hfill\\textbf{\\Date}\\\\}\n\n%% ------------------------------------------- Session start\n\\renewcommand{\\Session}{}\n\\SetHeader{}{\\textbf{Program Overview}}\n%%--------------------------------------------\n\n\n\\vspace*{-1.0cm}\n\\begin{center} %end of the first cat, header of the file and beginning of the table\n\\begin{tabular}{|l|| l |",
         file = zz)
-    cat(rep("c", number.rooms, sep = " "), "|}\\hline", file = zz)
+   ## cat(rep("c", number.rooms, sep = " "), "|}\\hline", file = zz)
+   ## for fixed columns if sessino names are short.
+    cat(rep("p{5cm}", number.rooms, sep = " "), "|}\\hline", file = zz)
     cat("&&", paste(room.names, collapse = "&"), "\\\\\\hline\\hline\n",
         file = zz)
     day.within <- 0
@@ -157,3 +159,4 @@ function (my.program.file, dirAbstracts, abstract.id = c(10:14))
     close(zz)
     setwd(init.wd)
 }
+

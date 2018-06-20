@@ -24,11 +24,12 @@
 #' @param notesDay column that contains the notes of the organizers about the (possible) day of presentation,
 #' @param notesPayment column that contains the notes of the organizers about the payment/registration information about the presentation
 #' @param verbose FALSE: indicates if some output should be written on screen while executing the function
+#' @param after string added after the abstract text, default is each abstract on a separate page
 #' @return TeX files are generated and stored dirAbstracts directory, My.data: data set with submitted data; PA: index indicating the presenting author for each submission.
 #' @export
 #' @examples
 #' set.seed(1)
-generate.abstracts <-
+my.generate.abstracts <-
 function (my.filename, dirAbstracts, author.lastname = seq(23,
     by = 6, length.out = 7), author.firstname = seq(24, by = 6,
     length.out = 7), author.institution = seq(26, by = 6, length.out = 7),
@@ -39,10 +40,10 @@ function (my.filename, dirAbstracts, author.lastname = seq(23,
     accept = 17, topic1 = 19, topic2 = 3, id = 2, notes = 73,
     ref2 = 77, ref3 = 78, ref4 = 79, duplicated = NULL, accept.all = F,
     noNotes = F, style = "AS2012", notesDay = 81, notesPayment = 82,
-    verbose = FALSE)
+    verbose = FALSE, after="\\clearpage")
 {
     initial.wd = getwd()
-    my.data <- read.delim(my.filename, sep = "\t")
+    my.data <- read.delim(my.filename, sep = "\t",colClasses ="character")
     setwd(dirAbstracts)
     num.authors <- apply(my.data[, author.lastname], 1, function(x) sum(!is.na(x) &
         x != ""))
@@ -57,7 +58,7 @@ function (my.filename, dirAbstracts, author.lastname = seq(23,
     num.authors <- apply(my.data[, author.lastname], 1, function(x) sum(!is.na(x) &
         x != ""))
     presenting.author <- as.numeric(unlist(apply(my.data[, author.presenting],
-        1, function(x) which(x == "Yes")[1])))
+        1, function(x) which(tolower(x) %in% c( "yes","presenter"))[1])))
     presenting.author[is.na(presenting.author)] <- 1
     titolo = autori = affiliazioni = abstract = rep("", dim(my.data)[1])
     if (style == "AS2012") {
@@ -274,7 +275,7 @@ function (my.filename, dirAbstracts, author.lastname = seq(23,
             zz <- file(paste(my.data[i, id], ".tex", sep = ""),
                 "w")
             cat("\\A", titolo[i], autori[i], affiliazioni[i],
-                temp, abstract[i], sep = "\n", file = zz)
+                temp, abstract[i], after, sep = "\n", file = zz)
             close(zz)
         }
     }

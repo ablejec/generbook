@@ -1,7 +1,5 @@
-
-
 \documentclass[12pt,twoside,a4paper]{article}
-
+%documentclass[14pt,twoside,a4paper]{extarticle}
 \textheight 19.7 true cm
 
 \usepackage[dvips]{epsfig}
@@ -10,7 +8,8 @@
 \usepackage{times}
 %\usepackage{amsmath}
 %\usepackage{amssymb}
-\usepackage{makeidx}
+\usepackage{imakeidx}
+%\usepackage[xindy]{imakeidx} % to try and solve author index special symbol problem, also check makeindex command
 \usepackage{enumerate}
 %\usepackage[utf8]{inputenc}
 %prova lara
@@ -27,12 +26,14 @@
 \usepackage{tikz}
 \def\width{15}
 \def\hauteur{25}
+%for HYPERREF and FANCYHDR package check way below
 
 %\usepackage{hyperref}
 \usepackage[cp1250]{inputenc}
 %added 2012, to make conditional checks and definition of styles
 \usepackage{etoolbox}
-
+\usepackage[T1]{fontenc}
+%\fontsize{14}{17}
 
 
 
@@ -56,7 +57,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%Added Lara 2009, from AB 2008
-\newcommand{\Title}[1]{\large{\textbf{#1}}\par\vspace{12pt}}
+\newcommand{\Title}[1]{\begin{center}
+{\textbf{#1}}
+\end{center}
+\par
+}
 \newcommand{\Author}[1]{
 \begin{center}
 \textit{#1}
@@ -86,7 +91,8 @@
 \newcommand{\AfilliationAndEmail}[1]{    \begin{minipage}{\textwidth}
           \begin{flushleft}     #1   \end{flushleft}
     \end{minipage} \par \vspace{4pt}}
-\newcommand{\Abstract}[1]{\vspace{8pt} \small{#1} \par \vspace{36pt}}
+%\newcommand{\Abstract}[1]{\vspace{8pt} \small{#1} \par \vspace{36pt}}
+\newcommand{\Abstract}[1]{\par \vspace{16pt} \large{#1} \par }
 
 
 
@@ -97,16 +103,16 @@
 %\newcommand{\A}[4]{
 \newcommand{\A}[5]{
 \begin{minipage}{\textwidth}
-    \Title{#1}
+    \Title{ #1}
     %\nopagebreak
-    \Author{#2}
+    \Author{\Large{#2}}
 %\begin{minipage}{\textwidth}
 %   \begin{flushleft}     \AfilliationAndEmail{#3}   \end{flushleft} \end{minipage}
 %~ \vspace{4pt}
 % \AfilliationAndEmail{\raggedright{#3}}
 
 \AfilliationAndEmail{#3}
-
+\end{minipage}
 %\begin{minipage}{\linewidth}
 %\begin{flushleft}
 %    \AfilliationAndEmail{#3}
@@ -119,9 +125,11 @@
     %keywords, will be removed later
     % \Keyword{#4}
     %\Abstract{#4} - put
+
     \Abstract{#5}
+    \clearpage
     %\pagebreak
-\end{minipage}
+%\end{minipage}
 }
 
 \parindent 0 pt
@@ -129,6 +137,8 @@
 \newcommand{\ttx}[1]{\small\sf{#1}\normalsize\rm}
 \renewcommand\indexname{Index of Authors}
 \makeindex
+% xindy index variant:
+%\makeindex[title=\indexname,options=-L turkish -C utf8,columns=2]
 
 %\chead{\tiny \colorbox[rgb]{0.76,.93,1}{\hspace{2,5cm}\bf Opazovanje dejavnikov tveganja zlomov pri \v{z}enskah z
 %osteoporozo v menopavzi, starih vsaj 55 let (SCOR'os)\hspace{2,5cm}}}
@@ -137,14 +147,15 @@
 
 
 %%%% dodal Blejec %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\usepackage[hidelinks,
+\usepackage[colorlinks,
   pdfborder=0 0 0,
   pdfauthor={A. Blejec},
   pdfpagemode=UseOutline,
   pdfstartview=Fit,
   pdfpagelabels, pageanchor,
   bookmarks, bookmarksopen, bookmarksnumbered,
-  citecolor= darkblue, linkcolor=blue, urlcolor=blue
+%  citecolor= darkblue, linkcolor=blue, urlcolor=blue
+  citecolor= black, linkcolor=black, urlcolor=black
 ]{hyperref}
 \providecommand{\email}[1]{\href{mailto:#1}{\normalfont\small\texttt{#1}}}
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -187,7 +198,10 @@
 \newcommand{\PrSectionHeader}[4]{
 \begin{tabbing}
 %xxxxxxxxxxxxx\=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\=xxxxxxxx\=xxxxxxxxxxxxx \kill
-xxxxxxxxxxxxx\=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\=xxxxxxxx\=xxxxxxxxxxxxxxxxxxxxxxxxxx \kill#1  \> \bf{#2} \> #3 \> {\em #4}\\[0.1mm]
+xxxxxxxxxxxxx\=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\=xxxxxxxx\=xxxxxxxxxxxxxxxxxxxxxxxxxx \kill
+%#1  \> \bf{#2} \> #3 \> {\em #4}\\[0.1mm]
+#1  \> \bf{#2} \> \> \\
+    \>  #3 \> {\em #4} \>\\[0.1mm]
 \end{tabbing}
 }
 
@@ -222,6 +236,9 @@ xxxxxxxxxxxxx\=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\=xxxxxxxx\=xxxxxxxxxxxxxxxx
 %for underscorem added by lara
 %\def\us{\char`\_}
 \begin{document}
+
+% comment/uncomment this to change the email/link-colours to default or black
+%\hypersetup{urlcolor=black}
 
 %for underscore, added by Lara
 %\texttt{create\us process}
@@ -267,8 +284,10 @@ xxxxxxxxxxxxx\=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\=xxxxxxxx\=xxxxxxxxxxxxxxxx
 %\pagestyle{fancy}
 \newpage
 
-~
 
+~
+\thispagestyle{empty}
+\newpage
 
 
 %%-------------add abstracts---------------------------
@@ -289,9 +308,14 @@ xxxxxxxxxxxxx\=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\=xxxxxxxx\=xxxxxxxxxxxxxxxx
 %\setcounter{page}{3}
 
 %added 2009 because of page numbering
-~
+
+
+
+
+
+%~
 \thispagestyle{empty}
-%\newpage
+\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \input{abstracts.tex}
@@ -430,7 +454,8 @@ xxxxxxxxxxxxx\=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\=xxxxxxxx\=xxxxxxxxxxxxxxxx
 %\end{figure}
 %\noindent  \hrulefill \\
 \vspace{3cm}
-\hspace{1.5cm} \includegraphics{sponsors2014}
+\hspace{1.5cm} \includegraphics{Sponsors-2017-crop.pdf}
+
 %%%\newline
 %\noindent  \hrulefill \\
 \small

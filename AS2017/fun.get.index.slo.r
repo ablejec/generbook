@@ -6,7 +6,8 @@
 # example  \index{Zzizzek@?i?ek, S} example	for my.char="?" and my.new.char="Zz"
 
 #2012, added some turkish characters "?"
-.fun.get.index.slo <- function (my.lastname, my.initials, my.char = c("Ĺˇ", "Ĺľ", "ÄŤ",
+.fun.get.index.slo <-
+function (my.lastname, my.initials, my.char = c("Ĺˇ", "Ĺľ", "ÄŤ",
     "Ä‡", "Ĺ ", "Ĺ˝", "ÄŚ", "Ä†"), my.new.char = c("szz", "zzz",
     "czz", "czzz", "SZZ", "ZZZ", "CZZ", "CZZZ"))
 {

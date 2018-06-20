@@ -12,14 +12,13 @@
 #' @export
 #' @examples
 #' set.seed(1)
-generate.program <-
+my.generate.program <-
 function (my.program.file, my.filename, dirAbstracts, abstract.id = c(10:14),
-    author.lastname = seq(23, by = 6, length.out = 7), author.firstname = seq(24,
-        by = 6, length.out = 7), accept = 17, pres.title = 18,
-    id = 75, outfile.name = "program.tex")
+    author.lastname = seq(23, by = 6, length.out = 7), author.firstname = seq(24,by = 6, length.out = 7), accept = 17, pres.title = 18,
+    id = 75, outfile.name = "program.tex",author.city=rep(51,7))
 {
     init.wd = getwd()
-    my.program <- read.delim(my.program.file, sep = "\t")
+     my.program <- read.delim(my.program.file, sep = "\t",stringsAsFactors=FALSE,na.strings=c("NA","m"))
     my.program <- my.program[!is.na(my.program[, 1]) & my.program[,
         1] != "", ]
     num.rows <- dim(my.program)[1]
@@ -28,22 +27,30 @@ function (my.program.file, my.filename, dirAbstracts, abstract.id = c(10:14),
     number.days <- unique(my.program$Day)
     my.time <- my.program$Day * 100 + my.program$TimeBegin
     num.rows <- dim(my.program)[1]
-    my.data <- read.delim(my.filename, sep = "\t")
+    my.data <- read.delim(my.filename, sep = "\t",stringsAsFactors=FALSE, na.strings=c("NA","m"))
+    my.data[,unique(author.city)] <- ""
+    print(my.data[,author.lastname])
+    print(apply(my.data[,author.lastname],1,paste,sep="*",collapse="+"))
     num.authors <- apply(my.data[, author.lastname], 1, function(x) sum(!is.na(x) &
-        x != ""))
+    !x %in% c( ""," ")))
+        print(num.authors)
     my.data <- my.data[num.authors != 0, ]
-    my.data <- my.data[my.data[, accept] == "Yes", ]
+    my.data <- my.data[toupper(my.data[, accept]) == "YES", ]
     num.authors <- apply(my.data[, author.lastname], 1, function(x) sum(!is.na(x) &
-        x != ""))
+        !x %in% c( ""," ")))
+    num.authors
     number.abstracts <- as.numeric(apply(my.program[, abstract.id],
-        1, function(x) sum(!is.na(x))))
+        1, function(x) sum(!is.na(x)&x!="")))
+    print(number.abstracts)
     setwd(dirAbstracts)
     zz <- file(outfile.name, "w")
-    cat("\\clearpage \n \\pagestyle{fancy}\n\t\t% ------------------------------------------------- Next day -----\n\t\t\\renewcommand{\\Date}{}\n\t\t\\addtocontents{toc}{\\hfill\\textbf{\\Date}\\\\}\n\t\t%% ------------------------------------------- Session start\n\t\t\\renewcommand{\\Session}{}\n\t\t\\SetHeader{\\textbf{",
+    cat("\\newcommand{\\LocTime}{}\n", sep = "", file = zz)
+    cat("\\clearpage \n \\normalsize \n \\pagestyle{fancy}\n\t\t% ------------------------------------------------- Next day -----\n\t\t\\renewcommand{\\Date}{}\n\t\t\\addtocontents{toc}{\\hfill\\textbf{\\Date}\\\\}\n\n\t\t%% ------------------------------------------- Session start\n\t\t\\renewcommand{\\Session}{}\n\t\t\\SetHeader{\\textbf{",
         as.character(my.program$DayLong[1]), "}}{}", "\n", file = zz,
         sep = "")
     for (i in 1:num.rows) {
         cat(i, "\n")
+        print(my.program[i,])
         if (my.program$TimeBegin[i] > 10)
             time.begin <- strsplit(as.character(my.program$TimeBegin[i]),
                 "")[[1]][1:5]
@@ -57,6 +64,10 @@ function (my.program.file, my.filename, dirAbstracts, abstract.id = c(10:14),
                 "")[[1]][1:4]
         }
         else time.end <- NA
+        # PrSectionHeader
+        # do not include phantom sessions
+        #
+        if(length(grep("\\\\phantom",as.character(my.program$Name[i])))==0){
         cat("\\PrSectionHeader{", time.begin, sep = "", file = zz)
         if (!is.na(time.end[1]))
             cat("--", time.end, "}", sep = "", file = zz)
@@ -64,23 +75,29 @@ function (my.program.file, my.filename, dirAbstracts, abstract.id = c(10:14),
         cat("{", as.character(my.program$Name[i]), "}", file = zz,
             sep = "")
         if (my.program$Room[i] != "")
-            cat("{(", as.character(my.program$Room[i]), ")}",
+            cat("{", as.character(my.program$Room[i]), "}",
                 file = zz, sep = "")
         else cat("{}", file = zz, sep = "")
-        if (my.program$Chair[i] != "")
+        cat("+",my.program$Chair[i],"+\n",sep="")
+        if ( my.program$Chair[i] != "")
             cat("{Chair: ", as.character(my.program$Chair[i]),
                 "}", file = zz, sep = "")
         else cat("{}", file = zz, sep = "")
         cat("\n", file = zz)
+        }
+        # End PrSectionHeader
+        #
         if (number.abstracts[i] > 0) {
             cat("\\begin{enumerate}\n", file = zz)
             for (ii in 1:number.abstracts[i]) {
                 cat(ii, " ")
                 my.index <- which(my.data[, id] == my.program[i,
                   abstract.id[ii]])
+                  cat("my.index=",my.index,"=")
                 tmp <- paste(my.data[my.index, author.firstname[1]],
                   " ", my.data[my.index, author.lastname[1]],
                   sep = "")
+                  print(tmp)
                 if (num.authors[my.index] > 1)
                   for (j in 2:num.authors[my.index]) {
                     if (j < num.authors[my.index])
@@ -93,7 +110,7 @@ function (my.program.file, my.filename, dirAbstracts, abstract.id = c(10:14),
                   }
                 autori <- tmp
                 cat("\\PrTalk{", as.character(my.data[my.index,
-                  pres.title]), "} \\newline {", autori, "}",
+                  pres.title]), "} \\newline {", autori, "}\n",
                   sep = "", file = zz)
             }
             cat("\\end{enumerate}\n", file = zz)
@@ -107,11 +124,19 @@ function (my.program.file, my.filename, dirAbstracts, abstract.id = c(10:14),
         }
     }
     close(zz)
+    ################
+    ## Blejec
+    X <- as.character(my.program$TimeBegin)
+    b.TimeBegin <- gsub("\\.",":",substring(X,1,nchar(X)-1) )
+    X <- as.character(my.program$TimeEnd)
+    b.TimeEnd <- gsub("\\.",":",substring(X,1,nchar(X)-1) )
+    ##
+    ################
     session.id <- which(number.abstracts > 0)
     zz <- file("abstracts.tex", "w")
     cat("\\noindent\\\\\n\n\\thispagestyle{empty}\n \\begin{center}\n  \\Large\n   % \\textbf{Program} \\\\ [0.5cm]\n   \\begin{flushright}\n   \\vspace{17cm} {\\Huge \\em{ \\textbf{ABSTRACTS}}} \\\\ [0.5cm]\n   \\end{flushright}\n   \\normalsize\n \\end{center}\n%\\noindent  \\hrulefill \\\\[0.5cm]\n\\small\n\\clearpage\n\n\n\\pagestyle{fancy}\n\\renewcommand{\\Date}{}\n\\addtocontents{toc}{\\hfill\\textbf{\\Date}\\\\}\n\n%% ------------------------------------------- Session start\n\\renewcommand{\\Session}{}\n\\SetHeader{}{\\textbf{Program Overview}}\n%%--------------------------------------------\n\n\n\n\n\n\n\n\n\n %\\begin{center}\n %  \\Large\n %   \\textbf{Abstracts} \\\\ [0.5cm]\n %  \\normalsize\n%  \\begin{flushright}\n%   \\vspace{17cm} {\\Huge \\em{ \\textbf{ABSTRACTS}}} \\\\ [0.5cm]\n%   \\end{flushright}\n%   \\normalsize\n \n \n% \\end{center}\n%\\noindent\\  %\\hrulefill \\\\\n\\small\n\\clearpage \n\n\\pagestyle{fancy}\n\n\\renewcommand{\\Date}{",
         as.character(my.program$DayShort[session.id[1]]), "}\n\\addtocontents{toc}{\\hfill\\textbf{\\Date}\\\\}\n\n\\renewcommand{\\Session}{",
-        as.character(my.program$Name[session.id[1]]), "}\n\\Section{\\Session}\n\\SetHeader{\\Date}{\\Session}",
+        as.character(my.program$Name[session.id[1]]), "}\n\\Section{\\Session}\n\\SetHeader{\\Date}{\\Session}\n",
         file = zz, sep = "")
     for (i in 1:length(session.id)) {
         cat(i, "\n")
@@ -121,8 +146,10 @@ function (my.program.file, my.filename, dirAbstracts, abstract.id = c(10:14),
         }
         cat("\\clearpage\n", file = zz)
         if (i != length(session.id)) {
-            cat("\\renewcommand{\\Session}{", as.character(my.program$Name[session.id[i +
-                1]]), "}\n\\Section{\\Session}\n\\SetHeader{\\Date}{\\Session}",
+            cat("\\renewcommand{\\Session}{",
+            as.character(gsub("Session ","S", my.program$Name[session.id[i+1]])), "}\n",
+                "\\renewcommand{\\LocTime}{[", gsub("all ","",my.program$Room[session.id[i+1]])," ", b.TimeBegin[session.id[i+1]],"-", b.TimeEnd[session.id[i+1]],"]}\n",
+                "\\Section{\\Session}\n\\SetHeader{\\Date, \\LocTime}{\\Session}\n",
                 file = zz, sep = "")
             if (my.program$Day[session.id[i]] != my.program$Day[session.id[i +
                 1]])
@@ -134,3 +161,4 @@ function (my.program.file, my.filename, dirAbstracts, abstract.id = c(10:14),
     close(zz)
     setwd(init.wd)
 }
+
