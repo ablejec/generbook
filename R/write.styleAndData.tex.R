@@ -1,0 +1,33 @@
+# this function creates the styleAndData.tex file
+# to change that file, adapt parameters here
+write.styleAndData.tex(dirAbstracts=dirAbstracts, Style="AS2012",
+ DocYear="2017",
+ Date="September 24 - 27, 2017",
+ URL = "http://conferences.nib.si/AS2017",
+ Circulation = 120,
+ PublishedBy = "Statistical Society of Slovenia\\\\\n              \\>Litostrojska c. 54\\\\\n              \\> 1000 Ljubljana, Slovenia",
+ OrganizingComm = list("Andrej Blejec (Chair)", "Bogdan Grmek", "Lara Lusa", "Rianne van den Broeke", "Irena Vipavc Brvar", "Jerneja \\v{C}uk"),
+ ISBN = ISBN, CIP = CIP,
+ ScientificComm = list(
+  "Lara Lusa (Chair), Slovenia",
+  "Janez Stare (Scientific advisor), Slovenia",
+    "Vladimir Batagelj, Slovenia",
+    "Mihael Perman (Scientific advisor), Slovenia",
+  "Andrej Blejec, Slovenia",
+  "Matev\\v{z} Bren, Slovenia",
+  "Maurizio Brizzi, Italy",
+  "Anu\\v{s}ka Ferligoj, Slovenia",
+  "Herwig Friedl, Austria",
+  "Dario Gregori, Italy",
+  "Katarina Ko\\v{s}melj, Slovenia",
+  "Irena Kri\\v{z}man, Slovenia",
+  "Stanislaw Mejza, Poland",
+  "Jo\\v{z}e Rovan, Slovenia",
+  "Tamas Rudas, Hungary",
+  "Vasja Vehovar, Slovenia"),
+  Editors = "Lara Lusa, Rianne van den Broeke and Andrej Blejec",
+  Sponsors = list("D-net","IBMI","NIB","Statistical Office of the Republic of Slovenia","RESULT"),
+  CenterPage2 = "The word cloud on the cover was generated using WordArt.com. The source text included\nthe abstracts of the talks; the fifty most common words were displayed, and greater\nprominence was given to words that appeared more frequently.",
+  FigureFile = "Wordcloud_AS2017.pdf",
+  Footer="Applied Statistics 2017, 24 - 27 September 2017, Ribno, Slovenia"
+ )
